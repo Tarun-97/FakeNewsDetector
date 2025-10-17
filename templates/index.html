@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector - AI-Powered Verification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🔍</div>
+                <span>Fake News Detector</span>
+            </div>
+            
+            <div class="nav-right-group">
+                <div class="language-selector-wrapper">
+                    <select id="languageSelector" class="language-select" onchange="handleLanguageChange(this.value)">
+                        <option value="en-US">English</option>
+                        <option value="hi-IN">हिन्दी (Hindi)</option>
+                        <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
+                        <option value="ta-IN">தமிழ் (Tamil)</option>
+                        <option value="te-IN">తెలుగు (Telugu)</option>
+                        <option value="ml-IN">മലയാളം (Malayalam)</option>
+                    </select>
+                </div>
+                
+                <div class="hamburger" onclick="toggleMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <nav class="nav" id="navMenu">
+                <a href="#" class="active">Detector</a>
+                <a href="#how-it-works">How It Works</a>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeText">Dark</span>
+                </button>
+            </nav>
+        </header>
+
+        <main class="main-card">
+            <section class="hero-section">
+                <div class="version-notice">
+                     <strong>Reimagine the Way You Work: </strong> Technology That Moves at Your Speed.
+                </div>
+                <h1 class="hero-title">VERIFY INFORMATION INSTANTLY</h1>
+                <p class="hero-subtitle">Leveraging AI to combat misinformation.</p>
+            </section>
+
+            <section class="input-section">
+                <div class="input-wrapper">
+                    <input 
+                        type="file" 
+                        id="imageUpload" 
+                        accept="image/*" 
+                        style="display: none;" 
+                        onchange="handleImageSelection()"
+                    >
+                    <label for="imageUpload" class="upload-btn" id="uploadBtn" title="Upload Image for OCR">
+                        <span class="upload-icon">🖼️</span>
+                    </label>
+
+                    <input 
+                        type="text" 
+                        class="main-input" 
+                        id="userInput"
+                        placeholder="Type or Paste text here..."
+                        onkeypress="if(event.key === 'Enter') analyzeNow()"
+                    >
+                    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+                </div>
+                <button class="analyze-btn" id="analyzeBtn" onclick="analyzeNow()">Analyze Now</button>
+                <div id="ocrStatus" class="ocr-status" style="display:none;"></div>
+            </section>
+
+            <section class="stats-section">
+                <div class="stats-title">Quick Stats</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--accent-color);">⚡</div>
+                        <div class="stat-value">99% Uptime</div>
+                        <div class="stat-label">System Reliability</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #ff6b6b;">🎨</div>
+                        <div class="stat-value">Color Diff</div>
+                        <div class="stat-label">Color Experience Detection</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #51cf66;">✨</div>
+                        <div class="stat-value">Crisp</div>
+                        <div class="stat-label">Crisp Explanation</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #667eea;">📈</div>
+                        <div class="stat-value">Confidence</div>
+                        <div class="stat-label">Confidence Parameter</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: #ffd43b;">🛡️</div>
+                        <div class="stat-value">Filtered</div>
+                        <div class="stat-label">Unwanted Explanations Avoided</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--accent-color);">🌐</div>
+                        <div class="stat-value">Multi-Lingual</div>
+                        <div class="stat-label">Language Specific & Voice Enabled</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card centered-stat">
+                    <div class="stat-icon" style="color: var(--text-primary);">
+                        <span style="font-size: 32px;">🏆</span>
+                    </div>
+                    <div class="stat-value">Building</div>
+                    <div class="stat-label">Digital Trust</div>
+                </div>
+            </section>
+
+            <section class="results-section" id="resultsSection">
+                <div class="results-header" id="resultsHeader" style="display: none; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0;">Analysis Results</h2>
+                    <div class="tts-toggle-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                        <label for="ttsToggle" style="margin: 0;">Reader:</label>
+                        <input type="checkbox" id="ttsToggle" onchange="toggleTtsReader()">
+                    </div>
+                </div>
+                <div class="result-card" id="resultCard"></div>
+            </section>
+
+            <section class="how-it-works" id="how-it-works">
+                <h2 class="section-title">How It Works</h2>
+                <div class="process-flow">
+                    <div class="process-step">Data Ingestion</div>
+                    <div class="arrow">→</div>
+                    <div class="process-step">NLP Feature Extraction</div>
+                    <div class="arrow">→</div>
+                    <div class="process-step">Classification Model</div>
+                    <div class="arrow">→</div>
+                    <div class="process-step">Result</div>
+                </div>
+            </section>
+
+            <div class="model-info">
+                <strong>Powered by:</strong> AI-Driven Fact Checking
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
