@@ -14,6 +14,17 @@
                 <span>Fake News Detector</span>
             </div>
             
+            <div class="nav-links-wrapper" id="navMenu">
+                <nav class="nav">
+                    <a href="#" class="active">Detector</a>
+                    <a href="#how-it-works">How It Works</a>
+                </nav>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeText">Dark</span>
+                </button>
+            </div>
+
             <div class="nav-right-group">
                 <div class="language-selector-wrapper">
                     <select id="languageSelector" class="language-select" onchange="handleLanguageChange(this.value)">
@@ -32,21 +43,12 @@
                     <span></span>
                 </div>
             </div>
-
-            <nav class="nav" id="navMenu">
-                <a href="#" class="active">Detector</a>
-                <a href="#how-it-works">How It Works</a>
-                <button class="theme-toggle" onclick="toggleTheme()">
-                    <span id="themeIcon">🌙</span>
-                    <span id="themeText">Dark</span>
-                </button>
-            </nav>
         </header>
 
         <main class="main-card">
             <section class="hero-section">
                 <div class="version-notice">
-                     <strong>Reimagine the Way You Work: </strong> Technology That Moves at Your Speed.
+                    <strong>Reimagine the Way You Work: </strong> Technology That Moves at Your Speed.
                 </div>
                 <h1 class="hero-title">VERIFY INFORMATION INSTANTLY</h1>
                 <p class="hero-subtitle">Leveraging AI to combat misinformation.</p>
@@ -158,6 +160,15 @@
         </main>
     </div>
 
+    <script>
+        
+        function toggleMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+        }
+        
+        
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
