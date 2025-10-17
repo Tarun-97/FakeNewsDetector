@@ -615,6 +615,7 @@ body {
     
     body {
         padding: 10px;
+        overflow-x: hidden;
     }
 
     .header {
@@ -688,8 +689,8 @@ body {
 
     /* QUICK STATS: 2 per row */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        grid-template-columns: repeat(auto-fit,minmax(120px, 1fr));
+        gap: 2px;
     }
     
     /* QUICK STATS: Building Digital Trust - full width below */
@@ -723,5 +724,41 @@ body {
 
     .arrow {
         transform: rotate(90deg);
+    }
+    .nav-right-group {
+        gap: 8px; /* Reduced space */
+    }
+    
+}
+
+
+/* NEW BLOCK: Specific Media Query for Mobile Landscape View (3x2 Grid) 
+   Screens up to 768px, held horizontally.
+*/
+@media (min-width: 480px) and (max-width: 900px) and (orientation: landscape) {
+
+    /* 1. Force the grid to exactly three columns */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px; /* Use 10px gap for a clean look */
+    }
+
+    
+    .stats-grid .stat-card:nth-child(4) {
+        grid-column-start: 1; /* Starts the second row */
+    }
+    
+    
+    .stats-grid .stat-card:nth-child(7) {
+        grid-column: 1 / -1; /* Make it span all 3 columns */
+    }
+    
+    
+    .main-card {
+        padding: 20px 10px; 
+    }
+    
+    .stat-card {
+        padding: 15px 8px; /* Slightly tighter padding on cards in landscape */
     }
 }
