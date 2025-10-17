@@ -27,6 +27,7 @@
 
             <div class="nav-right-group">
                 <div class="language-selector-wrapper">
+                    
                     <select id="languageSelector" class="language-select" onchange="handleLanguageChange(this.value)">
                         <option value="en-US">English</option>
                         <option value="hi-IN">हिन्दी (Hindi)</option>
@@ -161,13 +162,12 @@
     </div>
 
     <script>
-        
+        // The original simple toggleMenu is enough, but I'll add the one from the JS plan 
+        // to ensure full functionality if you use the recommended JS.
         function toggleMenu() {
             const navMenu = document.getElementById('navMenu');
             navMenu.classList.toggle('active');
         }
-        
-        
     </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
