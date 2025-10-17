@@ -79,35 +79,34 @@ body {
     font-size: 20px;
 }
 
-/* This wrapper now contains the main nav links (Detector, How It Works) AND the theme toggle */
+/* DESKTOP NAV WRAPPER: Contains nav links and theme toggle */
 .nav-links-wrapper {
     display: flex;
     gap: 30px;
     align-items: center;
+    /* Ensure it has a z-index for mobile dropdown */
+    z-index: 999; 
 }
 
-/* Wrapper for Language Selector + Hamburger on mobile */
-/* On desktop, this group now contains the language selector and the nav-links-wrapper */
+/* Wrapper for Language Selector + Hamburger (and eventually the nav-links-wrapper on desktop) */
 .nav-right-group {
     display: flex; 
     align-items: center;
     gap: 15px;
 }
 
-/* DESKTOP NAV: The main links */
+/* DESKTOP NAV: The main links container */
 .nav {
     display: flex;
     gap: 30px;
     align-items: center;
 }
 
-/* DESKTOP: We re-enable the language selector wrapper for desktop,
-   and hide the hamburger, allowing the language selector to be next to the nav links */
+/* --- Language Selector Styling --- */
 .language-selector-wrapper {
     display: block;
 }
 
-/* --- Language Selector Styling --- */
 .language-select {
     padding: 8px 10px;
     border: 2px solid var(--border-color);
@@ -143,7 +142,7 @@ body {
     color: var(--accent-color);
 }
 
-/* Theme toggle is part of the navigation when in mobile view */
+/* Theme toggle is part of the navigation */
 .theme-toggle {
     background: var(--input-bg);
     border: 2px solid var(--border-color);
@@ -157,6 +156,7 @@ body {
     color: var(--text-primary);
     transition: all 0.3s ease;
     width: auto; 
+    font-family: inherit;
 }
 
 .theme-toggle:hover {
@@ -165,6 +165,7 @@ body {
     border-color: var(--accent-color);
 }
 
+/* --- Content Styling (Non-Navigation) --- */
 .main-card {
     background: var(--bg-card);
     border-radius: 20px;
@@ -592,14 +593,6 @@ body {
     z-index: 1001; 
 }
 
-.hamburger span {
-    width: 25px;
-    height: 3px;
-    background: var(--text-primary);
-    border-radius: 3px;
-    transition: all 0.3s ease;
-}
-
 /* ------------------------------------------------------------------ */
 /* Mobile Responsiveness */
 /* ------------------------------------------------------------------ */
@@ -617,29 +610,23 @@ body {
         flex-wrap: nowrap;
         justify-content: space-between; 
     }
-
-    /* MOBILE NAV: Hide the main desktop nav wrapper */
+    
+    /* FIX 1: Hide the nav links wrapper by default on mobile */
     .nav-links-wrapper {
         display: none;
     }
-
-    /* MOBILE NAV: Show the Hamburger */
-    .hamburger {
-        /* Moved to .nav-right-group to ensure it's displayed next to the language selector */
-        display: flex; 
-    }
     
-    /* MOBILE COLLAPSIBLE MENU POSITION: This is the key fix */
+    /* FIX 2: Ensure the nav-links-wrapper (the mobile menu) is absolutely positioned and stacks items when active */
     .nav-links-wrapper.active {
-        display: flex;
+        display: flex; /* Make it visible */
         width: calc(100% - 30px); /* 100% width minus padding on body (15px * 2) */
-        flex-direction: column;
+        flex-direction: column; /* Stack items vertically */
         gap: 15px; 
-        align-items: stretch; 
+        align-items: stretch; /* Make items take full width */
         
         position: absolute;
-        top: 70px; 
-        right: 15px; /* Aligned with the header's right edge */
+        top: 75px; /* Adjust this value if needed based on header height */
+        right: 15px; /* Aligned with the body padding */
         background: var(--bg-card);
         box-shadow: var(--shadow);
         z-index: 999;
@@ -647,7 +634,7 @@ body {
         padding: 15px;
     }
 
-    /* Make the links full width inside the active menu */
+    /* FIX 3: Override the desktop inline 'display: flex' for the .nav element inside the mobile menu */
     .nav-links-wrapper.active .nav {
         display: flex;
         flex-direction: column;
@@ -655,8 +642,13 @@ body {
         align-items: stretch;
         width: 100%;
     }
+    
+    /* Ensure the hamburger is displayed */
+    .hamburger {
+        display: flex; 
+    }
 
-    /* Make individual links full width */
+    /* Make individual links full width inside the active menu */
     .nav-links-wrapper.active .nav a {
         display: block;
         padding: 8px 0;
