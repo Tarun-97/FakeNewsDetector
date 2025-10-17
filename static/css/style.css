@@ -84,8 +84,7 @@ body {
     display: flex;
     gap: 30px;
     align-items: center;
-    /* Ensure it has a z-index for mobile dropdown */
-    z-index: 999; 
+    /* Hide by default on mobile, handled in media query */
 }
 
 /* Wrapper for Language Selector + Hamburger (and eventually the nav-links-wrapper on desktop) */
@@ -102,9 +101,11 @@ body {
     align-items: center;
 }
 
-/* --- Language Selector Styling --- */
+/* --- Language Selector Styling with Icon --- */
 .language-selector-wrapper {
-    display: block;
+    display: flex;
+    align-items: center; /* Align icon and select vertically */
+    gap: 5px; /* Space between icon and dropdown */
 }
 
 .language-select {
@@ -113,9 +114,10 @@ body {
     border-radius: 8px;
     background: var(--input-bg);
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 9px;
     cursor: pointer;
     appearance: none; 
+    /* Remove default dropdown arrow */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205A1%201%200%20006%2010c.26%200%20.51-.11.707-.293l5-5A1%201%200%200010.293%203.293z%22%2F%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
@@ -593,6 +595,16 @@ body {
     z-index: 1001; 
 }
 
+.hamburger span {
+    display: block;
+    height: 3px;
+    width: 25px;
+    background-color: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Mobile Responsiveness */
 /* ------------------------------------------------------------------ */
@@ -610,23 +622,23 @@ body {
         flex-wrap: nowrap;
         justify-content: space-between; 
     }
-    
-    /* FIX 1: Hide the nav links wrapper by default on mobile */
+
+    /* DESKTOP NAV WRAPPER is hidden on mobile by default */
     .nav-links-wrapper {
         display: none;
     }
-    
-    /* FIX 2: Ensure the nav-links-wrapper (the mobile menu) is absolutely positioned and stacks items when active */
+
+    /* SHOW THE MOBILE MENU when the .active class is added by JS */
     .nav-links-wrapper.active {
-        display: flex; /* Make it visible */
-        width: calc(100% - 30px); /* 100% width minus padding on body (15px * 2) */
-        flex-direction: column; /* Stack items vertically */
+        display: flex; 
+        width: 250px; /* Set a specific width for the dropdown */
+        flex-direction: column; 
         gap: 15px; 
-        align-items: stretch; /* Make items take full width */
+        align-items: stretch; 
         
         position: absolute;
-        top: 75px; /* Adjust this value if needed based on header height */
-        right: 15px; /* Aligned with the body padding */
+        top: 75px; 
+        right: 15px; 
         background: var(--bg-card);
         box-shadow: var(--shadow);
         z-index: 999;
@@ -634,7 +646,7 @@ body {
         padding: 15px;
     }
 
-    /* FIX 3: Override the desktop inline 'display: flex' for the .nav element inside the mobile menu */
+    /* Override the desktop inline 'display: flex' for the .nav element inside the mobile menu */
     .nav-links-wrapper.active .nav {
         display: flex;
         flex-direction: column;
@@ -667,6 +679,11 @@ body {
         margin-top: 10px;
         width: 100%;
         justify-content: center;
+    }
+    
+    /* Language selector on mobile */
+    .language-selector-wrapper {
+        gap: 8px; /* Slightly more space */
     }
 
     /* QUICK STATS: 2 per row */
