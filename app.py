@@ -17,12 +17,7 @@ except Exception as e:
 
 MODEL_NAME = "gemini-2.5-flash" 
 
-# --- CRITICAL: Tesseract Setup ---
-# Tesseract is a separate program needed for OCR. 
-# 1. Install Tesseract-OCR software on your OS.
-# 2. If it is NOT in your system's PATH, uncomment and update the line below:
-# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-# ---------------------------------
+ 
 
 @app.route("/")
 def index():

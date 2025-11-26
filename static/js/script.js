@@ -14,7 +14,7 @@ const VERDICT_TRANSLATIONS = {
     'hi-IN': { real: 'सच्ची खबर', fake: 'झूठी खबर' },    // Hindi (Sacchi Khabar, Jhoothi Khabar)
     'kn-IN': { real: 'ನಿಜವಾದ ಸುದ್ದಿ', fake: 'ನಕಲಿ ಸುದ್ದಿ' }, // Kannada (Nijavāda Suddi, Nakali Suddi)
     'ta-IN': { real: 'உண்மையான செய்தி', fake: 'போலியான செய்தி' }, // Tamil (Uṇmaiyāṉa Ceyti, Poliyāṉa Ceyti)
-    'te-IN': { real: 'నిజమైన వార్తలు', fake: 'నకిలీ వార్తలు' },   // Telugu (Nijamaina Vārtalu, Nakilī Vārtalu)
+    'te-IN': { real: 'నిజమైన వార్తలు', fake: 'నకిలీ వార్తలు' },  // Telugu (Nijamaina Vārtalu, Nakilī Vārtalu)
     'ml-IN': { real: 'യഥാർത്ഥ വാർത്ത', fake: 'വ്യാജവാർത്ത' }  // Malayalam (Yathārththa Vārththa, Vyājavārtta)
 };
 // --------------------------------------------
@@ -100,20 +100,21 @@ function handleLanguageChange(langCode) {
     const voiceBtn = document.getElementById('voiceBtn');
     const uploadBtn = document.getElementById('uploadBtn'); 
     const resultsHeader = document.getElementById('resultsHeader');
-    const ttsToggleWrapper = resultsHeader.querySelector('.tts-toggle-wrapper');
+    const ttsToggleWrapper = resultsHeader ? resultsHeader.querySelector('.tts-toggle-wrapper') : null;
     const userInput = document.getElementById('userInput');
 
     // Stop all active language features
     if (isListening) stopVoice();
     if (ttsSynth.speaking) ttsSynth.cancel();
-    document.getElementById('ttsToggle').checked = false;
+    const ttsToggle = document.getElementById('ttsToggle');
+    if (ttsToggle) ttsToggle.checked = false;
 
     // Check if the selected language is English
     const isEnglish = langCode === 'en-US';
     
     // 1. Voice and Upload
-    voiceBtn.style.display = isEnglish ? 'flex' : 'none';
-    uploadBtn.style.display = isEnglish ? 'flex' : 'none';
+    if (voiceBtn) voiceBtn.style.display = isEnglish ? 'flex' : 'none';
+    if (uploadBtn) uploadBtn.style.display = isEnglish ? 'flex' : 'none';
 
     // 2. TTS Reader
     if (ttsToggleWrapper) {
@@ -121,10 +122,12 @@ function handleLanguageChange(langCode) {
     }
 
     // 3. Placeholder text
-    if (isEnglish) {
-        userInput.placeholder = "Type or Paste text here...";
-    } else {
-        userInput.placeholder = "Type or Paste news text in the selected language...";
+    if (userInput) {
+        if (isEnglish) {
+            userInput.placeholder = "Type or Paste text here...";
+        } else {
+            userInput.placeholder = "Type or Paste news text in the selected language...";
+        }
     }
 }
 // ---------------------------------------------
@@ -185,7 +188,8 @@ async function analyzeNow() {
     // Clear any active TTS and voice input
     if (ttsSynth.speaking) {
         ttsSynth.cancel();
-        document.getElementById('ttsToggle').checked = false;
+        const ttsToggle = document.getElementById('ttsToggle');
+        if (ttsToggle) ttsToggle.checked = false;
     }
     if (isListening) stopVoice();
     
@@ -263,13 +267,13 @@ function displayResult(content) {
     const badge = `<span class="verdict-badge ${badgeClass}">${isFake ? '⚠️' : '✓'} ${badgeText}</span>`;
     
     // --- 4. Setup UI ---
-    const ttsToggleWrapper = resultsHeader.querySelector('.tts-toggle-wrapper');
+    const ttsToggleWrapper = resultsHeader ? resultsHeader.querySelector('.tts-toggle-wrapper') : null;
     const isEnglish = selectedLanguage === 'en-US';
 
     if (ttsToggleWrapper) {
         ttsToggleWrapper.style.display = isEnglish ? 'flex' : 'none';
     }
-    resultsHeader.style.display = 'flex';
+    if (resultsHeader) resultsHeader.style.display = 'flex';
     
     // --- 5. Parse Sections and Render ---
     const sectionsHtml = parseAIResponse(cleanContent);
@@ -288,23 +292,53 @@ function displayResult(content) {
 }
 
 
+// ***********************************************
+// *** CORRECTED FUNCTION WITH SCALING LOGIC ***
+// ***********************************************
 function parseAIResponse(content) {
     let html = '';
     
-    const lines = content.split('\n');
+    // Regex to split the main content by section headers, keeping the headers for processing.
+    const sectionSplitRegex = /(\*\*Analysis:\*\*|\*\*Explanation:\*\*|\*\*Credibility Score:\*\*|Analysis:|Explanation:|Credibility Score:)/;
+    const parts = content.split(sectionSplitRegex).filter(p => p.trim().length > 0);
     
-    lines.forEach(line => {
-        line = line.trim();
-        if (!line) return;
-        
-        // IMPORTANT: We rely on the AI model to consistently use the English section markers 
-        // (**Analysis:**, **Explanation:**, etc.) even when the content is translated.
-        // The regex must be robust to catch variations.
+    let currentTitle = null;
+    let currentContent = '';
+    const sections = [];
+
+    // Simple state machine to group content by section
+    parts.forEach(part => {
+        part = part.trim();
+        // Check if the current part is a section header
+        if (part.match(sectionSplitRegex)) {
+            // If a previous section exists, push it
+            if (currentTitle) {
+                sections.push({ title: currentTitle, content: currentContent.trim() });
+            }
+            // Normalize the title for internal comparison
+            if (part.includes('Analysis')) currentTitle = 'Analysis';
+            else if (part.includes('Explanation')) currentTitle = 'Explanation';
+            else if (part.includes('Credibility Score')) currentTitle = 'Credibility Score';
+            currentContent = '';
+        } else {
+            // Append content to the current section
+            currentContent += part;
+        }
+    });
+    // Push the last section
+    if (currentTitle) {
+        sections.push({ title: currentTitle, content: currentContent.trim() });
+    } else {
+        // Handle case where no specific sections were found (treat as regular text)
+        return content.replace(/\n/g, '<br>');
+    }
+    
+    sections.forEach(section => {
+        const title = section.title;
+        const text = section.content;
 
         // Check for Analysis section
-        if (line.includes('**Analysis:**') || line.startsWith('Analysis:')) {
-            const text = line.replace(/\*\*Analysis:\*\*/g, '').replace(/Analysis:/g, '').trim();
-            const title = "Analysis"; 
+        if (title === "Analysis") {
             html += `
                 <div style="margin-bottom: 20px;">
                     <div class="explanation-marker" data-section="analysis" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -316,9 +350,7 @@ function parseAIResponse(content) {
             `;
         }
         // Check for Explanation section
-        else if (line.includes('**Explanation:**') || line.startsWith('Explanation:')) {
-            const text = line.replace(/\*\*Explanation:\*\*/g, '').replace(/Explanation:/g, '').trim();
-            const title = "Explanation";
+        else if (title === "Explanation") {
             html += `
                 <div style="margin-bottom: 20px;">
                     <div class="explanation-marker" data-section="explanation" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -330,22 +362,20 @@ function parseAIResponse(content) {
             `;
         }
         // Check for Credibility Score
-        else if (line.includes('**Credibility Score:**') || line.includes('Credibility Score:')) {
-            const text = line
-                .replace(/\*\*Credibility Score:\*\*/g, '')
-                .replace(/Credibility Score:/g, '')
-                .replace(/\*\*/g, '')
-                .trim();
-
-            const title = "Credibility Score";
-            // Attempt to extract a percentage number for the progress bar logic
-            const scoreMatch = text.match(/(\d+)/);
-            const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-            const percentage = Math.min(score, 100);
+        else if (title === "Credibility Score") {
+            // Attempt to extract a numerical score (integer or decimal)
+            // Regex matches: 5/5, 4.5/5, 0/5
+            const scoreMatch = text.match(/(\d+(\.\d+)?)\s*\/\s*5/); 
+            // Use parseFloat to handle decimal scores like 4.5
+            const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
             
-            let scoreColor = '#ff6b6b';
-            if (score >= 4) scoreColor = '#51cf66';
-            else if (score >= 2) scoreColor = '#ffd43b';
+            // *** THE SCALING FORMULA IMPLEMENTATION ***
+            // Formula: (score / 5) * 100
+            const percentage = Math.min((score / 5) * 100, 100);
+            
+            let scoreColor = '#ff6b6b'; // Red for low score
+            if (score >= 4) scoreColor = '#51cf66'; // Green for high score
+            else if (score >= 2) scoreColor = '#ffd43b'; // Yellow for medium score
             
             html += `
                 <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid var(--border-color);">
@@ -364,21 +394,26 @@ function parseAIResponse(content) {
                 </div>
             `;
         }
-        // Regular text/fallback
+        // Fallback for non-recognized content
         else {
-            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>');
+            const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>');
             html += `<p style="margin-bottom: 12px; color: var(--text-primary);">${formatted}</p>`;
         }
     });
-    
-    return html || content.replace(/\n/g, '<br>');
+
+    return html;
 }
+// ***********************************************
+// *** END OF CORRECTED parseAIResponse FUNCTION ***
+// ***********************************************
 
 
 // --- TTS Functions (No logic change needed) ---
 
 function toggleTtsReader() {
     const ttsToggle = document.getElementById('ttsToggle');
+    if (!ttsToggle) return; 
+
     if (ttsToggle.checked) {
         readExplanation();
     } else {
@@ -390,10 +425,11 @@ function toggleTtsReader() {
 
 function readExplanation() {
     const explanationElement = document.querySelector('.tts-explanation');
+    const ttsToggle = document.getElementById('ttsToggle');
     
     if (!explanationElement) {
         console.warn("Explanation text not found for TTS.");
-        document.getElementById('ttsToggle').checked = false; 
+        if (ttsToggle) ttsToggle.checked = false; 
         return;
     }
 
@@ -410,13 +446,13 @@ function readExplanation() {
         ttsUtterance.lang = selectedLanguage; 
 
         ttsUtterance.onend = () => {
-            document.getElementById('ttsToggle').checked = false;
+            if (ttsToggle) ttsToggle.checked = false;
         };
         
         ttsSynth.speak(ttsUtterance);
     } else {
         console.warn("Explanation section is empty.");
-        document.getElementById('ttsToggle').checked = false;
+        if (ttsToggle) ttsToggle.checked = false;
     }
 }
 // -------------------------
@@ -429,17 +465,62 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTheme = savedTheme;
     const icon = document.getElementById('themeIcon');
     const text = document.getElementById('themeText');
-    if (savedTheme === 'dark') {
-        icon.textContent = '☀️';
-        text.textContent = 'Light';
-    } else {
-        icon.textContent = '🌙';
-        text.textContent = 'Dark';
+    if (icon && text) {
+        if (savedTheme === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Light';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Dark';
+        }
     }
 
     // Ensure the language selector exists before calling handleLanguageChange
     const selector = document.getElementById('languageSelector');
     if (selector) {
         handleLanguageChange(selector.value);
+        // Add event listener for language change
+        selector.addEventListener('change', (event) => {
+            handleLanguageChange(event.target.value);
+        });
+    }
+    
+    // Attach event listener for the analyze button
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', analyzeNow);
+    }
+    
+    // Attach event listener for the voice button
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', toggleVoice);
+    }
+
+    // Attach event listener for the image upload button (the '+' button)
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+            document.getElementById('imageUpload').click();
+        });
+    }
+
+    // Attach event listener for the hidden file input
+    const imageUpload = document.getElementById('imageUpload');
+    if (imageUpload) {
+        imageUpload.addEventListener('change', handleImageSelection);
+    }
+    
+    // Attach event listener for the theme toggle (assuming this is managed elsewhere, 
+    // but the function needs to be exposed/called)
+    const themeToggleElement = document.getElementById('themeToggle'); // Assuming an ID for a clickable area
+    if (themeToggleElement) {
+        themeToggleElement.addEventListener('click', toggleTheme);
+    }
+
+    // Attach event listener for the TTS toggle
+    const ttsToggle = document.getElementById('ttsToggle');
+    if (ttsToggle) {
+        ttsToggle.addEventListener('change', toggleTtsReader);
     }
 });

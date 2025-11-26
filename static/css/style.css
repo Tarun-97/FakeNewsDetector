@@ -52,7 +52,6 @@ body {
     border-radius: 15px;
     padding: 20px 30px;
     box-shadow: var(--shadow);
-    /* Set header to flex, but use space-between and a wrapper to position groups */
     display: flex;
     justify-content: space-between; 
     align-items: center;
@@ -80,44 +79,45 @@ body {
     font-size: 20px;
 }
 
-/* NEW: Wrapper for Nav links + Theme toggle on desktop */
+/* DESKTOP NAV WRAPPER: Contains nav links and theme toggle */
 .nav-links-wrapper {
     display: flex;
     gap: 30px;
     align-items: center;
+    /* Hide by default on mobile, handled in media query */
 }
 
-/* NEW: Wrapper for Language Selector + Hamburger on mobile */
-/* On desktop, this group contains only the language selector */
+/* Wrapper for Language Selector + Hamburger (and eventually the nav-links-wrapper on desktop) */
 .nav-right-group {
     display: flex; 
     align-items: center;
     gap: 15px;
 }
 
-/* DESKTOP NAV: The main links */
+/* DESKTOP NAV: The main links container */
 .nav {
     display: flex;
     gap: 30px;
     align-items: center;
 }
 
-/* DESKTOP: We re-enable the language selector wrapper for desktop,
-   and hide the hamburger, allowing the language selector to be next to the nav links */
+/* --- Language Selector Styling with Icon --- */
 .language-selector-wrapper {
-    display: block;
+    display: flex;
+    align-items: center; /* Align icon and select vertically */
+    gap: 5px; /* Space between icon and dropdown */
 }
 
-/* --- Language Selector Styling --- */
 .language-select {
     padding: 8px 10px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: var(--input-bg);
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 13px;
     cursor: pointer;
     appearance: none; 
+    /* Remove default dropdown arrow */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205A1%201%200%20006%2010c.26%200%20.51-.11.707-.293l5-5A1%201%200%200010.293%203.293z%22%2F%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
@@ -144,6 +144,7 @@ body {
     color: var(--accent-color);
 }
 
+/* Theme toggle is part of the navigation */
 .theme-toggle {
     background: var(--input-bg);
     border: 2px solid var(--border-color);
@@ -156,6 +157,8 @@ body {
     font-size: 14px;
     color: var(--text-primary);
     transition: all 0.3s ease;
+    width: auto; 
+    font-family: inherit;
 }
 
 .theme-toggle:hover {
@@ -164,6 +167,7 @@ body {
     border-color: var(--accent-color);
 }
 
+/* --- Content Styling (Non-Navigation) --- */
 .main-card {
     background: var(--bg-card);
     border-radius: 20px;
@@ -592,76 +596,101 @@ body {
 }
 
 .hamburger span {
-    width: 25px;
+    display: block;
     height: 3px;
-    background: var(--text-primary);
-    border-radius: 3px;
+    width: 25px;
+    background-color: var(--text-primary);
+    border-radius: 2px;
     transition: all 0.3s ease;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Mobile Responsiveness */
 /* ------------------------------------------------------------------ */
 @media (max-width: 768px) {
     .container {
-        padding: 0 15px; 
+        padding: 0px 0px; 
     }
     
     body {
-        padding: 15px;
+        padding: 10px;
+        overflow-x: hidden;
     }
 
     .header {
         padding: 15px 20px;
         flex-wrap: nowrap;
-        /* Ensure the main groups (Logo | Nav | Right Group) are spaced out */
         justify-content: space-between; 
     }
 
-    /* MOBILE NAV: Hide the main desktop nav area */
-    .nav {
+    /* DESKTOP NAV WRAPPER is hidden on mobile by default */
+    .nav-links-wrapper {
         display: none;
     }
 
-    /* MOBILE NAV: Show the Hamburger and Language Dropdown */
-    .nav-right-group {
-        display: flex;
-        align-items: center;
-        gap: 15px; /* Spacing between dropdown and hamburger */
-    }
-
-    /* MOBILE: Language dropdown is now visible next to the hamburger */
-    .language-selector-wrapper {
-        display: block; 
-    }
-    
-    /* MOBILE: Show the hamburger icon */
-    .hamburger {
+    /* SHOW THE MOBILE MENU when the .active class is added by JS */
+    .nav-links-wrapper.active {
         display: flex; 
-    }
-
-    /* MOBILE COLLAPSIBLE MENU POSITION */
-    .nav.active {
-        display: flex;
-        width: calc(100% - 30px);
-        flex-direction: column;
-        gap: 10px;
+        width: 250px; /* Set a specific width for the dropdown */
+        flex-direction: column; 
+        gap: 15px; 
+        align-items: stretch; 
         
         position: absolute;
-        top: 70px; /* Below the header */
-        right: 15px;
+        top: 75px; 
+        right: 15px; 
         background: var(--bg-card);
         box-shadow: var(--shadow);
         z-index: 999;
         border-radius: 10px;
         padding: 15px;
-        border-top: 1px solid var(--border-color); /* Add a separator line */
+    }
+
+    /* Override the desktop inline 'display: flex' for the .nav element inside the mobile menu */
+    .nav-links-wrapper.active .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        width: 100%;
+    }
+    
+    /* Ensure the hamburger is displayed */
+    .hamburger {
+        display: flex; 
+    }
+
+    /* Make individual links full width inside the active menu */
+    .nav-links-wrapper.active .nav a {
+        display: block;
+        padding: 8px 0;
+        text-align: left;
+    }
+
+    /* Add a divider between nav links */
+    .nav-links-wrapper.active .nav a:not(:last-child) {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-bottom: 5px;
+    }
+    
+    /* Theme toggle full width in mobile menu */
+    .nav-links-wrapper.active .theme-toggle {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Language selector on mobile */
+    .language-selector-wrapper {
+        gap: 8px; /* Slightly more space */
     }
 
     /* QUICK STATS: 2 per row */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        grid-template-columns: repeat(auto-fit,minmax(120px, 1fr));
+        gap: 2px;
     }
     
     /* QUICK STATS: Building Digital Trust - full width below */
@@ -695,5 +724,41 @@ body {
 
     .arrow {
         transform: rotate(90deg);
+    }
+    .nav-right-group {
+        gap: 8px; /* Reduced space */
+    }
+    
+}
+
+
+/* NEW BLOCK: Specific Media Query for Mobile Landscape View (3x2 Grid) 
+   Screens up to 768px, held horizontally.
+*/
+@media (min-width: 480px) and (max-width: 900px) and (orientation: landscape) {
+
+    /* 1. Force the grid to exactly three columns */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px; /* Use 10px gap for a clean look */
+    }
+
+    
+    .stats-grid .stat-card:nth-child(4) {
+        grid-column-start: 1; /* Starts the second row */
+    }
+    
+    
+    .stats-grid .stat-card:nth-child(7) {
+        grid-column: 1 / -1; /* Make it span all 3 columns */
+    }
+    
+    
+    .main-card {
+        padding: 20px 10px; 
+    }
+    
+    .stat-card {
+        padding: 15px 8px; /* Slightly tighter padding on cards in landscape */
     }
 }
