@@ -6,6 +6,8 @@ from PIL import Image
 import pytesseract
 import io
 
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+
 app = Flask(__name__)
 
 # --- Configuration for the New SDK ---
