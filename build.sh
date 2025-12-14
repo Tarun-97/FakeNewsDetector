@@ -3,15 +3,13 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Update package lists and install Tesseract OCR
-# 'tesseract-ocr' is the system package for the engine
-echo "Installing Tesseract OCR..."
-apt-get update
-apt-get install -y tesseract-ocr
-echo "Tesseract OCR installed successfully."
+
+echo "Tesseract OCR engine is being installed via the apt.txt build pack."
 
 # Install Python dependencies from requirements.txt
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
+
+
 
 echo "Build process complete."
