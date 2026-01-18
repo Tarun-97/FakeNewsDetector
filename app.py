@@ -3,59 +3,61 @@ from google import genai
 from google.genai import types
 import os
 from PIL import Image
-import pytesseract
 import io
 
 app = Flask(__name__)
 
-# --- Configuration for the New SDK ---
+# --- Gemini Configuration ---
 try:
-    # Ensure GEMINI_API_KEY is set in your environment
     client = genai.Client()
 except Exception as e:
     print(f"Error initializing Gemini client: {e}")
 
-MODEL_NAME = "gemini-2.5-flash" 
+MODEL_NAME = "gemini-2.5-flash"
 
- 
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# --- OCR Route (No Change) ---
+
+# --- OCR Route (Gemini Vision - Tesseract Removed) ---
 @app.route("/ocr", methods=["POST"])
 def ocr_process():
+    if not os.getenv("GEMINI_API_KEY"):
+        return jsonify({"error": "API Key Error: GEMINI_API_KEY environment variable is not set."}), 500
+
     if 'image' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
-    
+
     file = request.files['image']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    if file:
-        try:
-            image_data = io.BytesIO(file.read())
-            img = Image.open(image_data)
-            
-            # Perform OCR
-            extracted_text = pytesseract.image_to_string(img)
-            clean_text = ' '.join(extracted_text.split()).strip()
+    try:
+        image = Image.open(io.BytesIO(file.read()))
 
-            if not clean_text:
-                 return jsonify({"error": "No recognizable text found in the image."}), 400
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                "Extract all readable text from this image. Do not add explanations.",
+                image
+            ]
+        )
 
-            return jsonify({"text": clean_text})
-            
-        except pytesseract.TesseractNotFoundError:
-            return jsonify({
-                "error": "Tesseract OCR engine not found. Install Tesseract and/or set the 'pytesseract.pytesseract.tesseract_cmd' path."
-            }), 500
-        except Exception as e:
-            print("OCR Error:", e)
-            return jsonify({"error": f"Error processing image: {str(e)}"}), 500
+        extracted_text = response.text.strip()
 
-# --- Chat Route (Modified for Reliable Verdict Tag) ---
+        if not extracted_text:
+            return jsonify({"error": "No recognizable text found in the image."}), 400
+
+        return jsonify({"text": extracted_text})
+
+    except Exception as e:
+        print("Gemini OCR Error:", e)
+        return jsonify({"error": f"Error processing image: {str(e)}"}), 500
+
+
+# --- Chat Route (UNCHANGED) ---
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
@@ -63,9 +65,8 @@ def chat():
             return jsonify({"reply": "API Key Error: GEMINI_API_KEY environment variable is not set."})
 
         user_input = request.json.get("message", "")
-        lang_code = request.json.get("language", "en-US") 
+        lang_code = request.json.get("language", "en-US")
 
-        # Map language codes to human-readable names for the prompt
         language_name_map = {
             "en-US": "English",
             "hi-IN": "Hindi",
@@ -79,34 +80,40 @@ def chat():
         if not user_input.strip():
             return jsonify({"reply": "Please enter a statement to analyze."})
 
-        # --- MODIFIED SYSTEM INSTRUCTION ---
         system_instruction = (
             "You are a highly objective Multilingual Fake News Detection Assistant. "
-            "Your task is to analyze the provided statement for credibility using **real-time search results only**. "
-            "**Crucial Step 1:** If the input is not in English, you must translate it to English internally for accurate analysis. "
-            "**Crucial Step 2:** Use the Google Search tool to verify the claim. "
-            "**Crucial Step 3 (NEW):** The very first line of your response MUST be a machine-readable verdict tag. Use **[VERDICT:REAL]** if the news is true/verified, or **[VERDICT:FAKE]** if it is false/misinformation. Do not translate this tag. "
-            "**Crucial Step 4:** The entire final response after the verdict tag, including all section text, must be written in **{target_language}**. "
-            "Structure the content AFTER the verdict tag using the sections: **Analysis:**, **Explanation:**, and **Credibility Score:**."
+            "Your task is to analyze the provided statement for credibility. "
+            "If the input is not in English, translate it internally for analysis. "
+            "Use the Google Search tool when available to verify the claim. "
+            "The very first line of your response MUST be a machine-readable verdict tag. "
+            "Use [VERDICT:REAL] if verified, or [VERDICT:FAKE] if misinformation. "
+            "The entire final response after the verdict tag must be written in {target_language}. "
+            "Structure the content AFTER the verdict tag using: Analysis, Explanation, Credibility Score."
         )
-        
-        prompt = f"Analyze this statement for credibility and fact-check it. Ensure the entire response is in {target_language} and begins with the required verdict tag: \"{user_input}\""
-        
-        # --- Configure the API call with Search Grounding Tool ---
+
+        prompt = (
+            f"Analyze this statement for credibility and fact-check it. "
+            f"Ensure the response is in {target_language} and begins with the verdict tag:\n"
+            f"\"{user_input}\""
+        )
+
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction=system_instruction.format(target_language=target_language), 
-                tools=[{"google_search": {}}] 
+                system_instruction=system_instruction.format(
+                    target_language=target_language
+                ),
+                tools=[{"google_search": {}}]
             )
         )
-        
+
         return jsonify({"reply": response.text})
 
     except Exception as e:
-        print("Error during content generation:", e)
+        print("Chat Error:", e)
         return jsonify({"reply": f"An internal error occurred: {str(e)}"})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

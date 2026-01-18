@@ -20,42 +20,64 @@ const VERDICT_TRANSLATIONS = {
 // --------------------------------------------
 
 // Initialize speech recognition
+// Initialize speech recognition
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    // --- MODIFIED: Use the currently selected language for recognition ---
     recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = selectedLanguage; 
 
+    // Fires when the mic actually starts listening
+    recognition.onstart = function() {
+        console.log("MIC IS ON: Start speaking...");
+        isListening = true;
+        document.getElementById('voiceBtn').classList.add('listening');
+    };
+
+    // Fires when the browser detects you stopped talking
+    recognition.onspeechend = function() {
+        console.log("Speech stopped: Processing...");
+        stopVoice();
+    };
+
     recognition.onresult = function(event) {
         const transcript = event.results[0][0].transcript;
+        console.log("Heard text:", transcript);
         document.getElementById('userInput').value = transcript;
         stopVoice();
     };
 
     recognition.onerror = function(event) {
-        console.error('Speech recognition error:', event.error);
+        console.error('Recognition Error:', event.error);
+        if(event.error === 'not-allowed') {
+            alert("Mic blocked! Click the 'Lock' icon in the URL bar and 'Allow' the microphone.");
+        }
         stopVoice();
     };
 
     recognition.onend = function() {
-        stopVoice();
+        console.log("MIC IS OFF.");
+        isListening = false;
+        const voiceBtn = document.getElementById('voiceBtn');
+        if (voiceBtn) voiceBtn.classList.remove('listening');
     };
 }
 
 function toggleVoice() {
     if (!recognition) {
-        alert('Speech recognition not supported. Please use Chrome, Edge, or Safari.');
+        alert('Speech recognition not supported.');
         return;
     }
 
     if (isListening) {
-        stopVoice();
+        // If already listening, clicking again STOPS it
+        console.log("Manual stop requested.");
+        recognition.stop(); 
     } else {
-        // --- MODIFIED: Update recognition language before starting ---
+        // Start listening
         recognition.lang = selectedLanguage;
-        startVoice();
+        recognition.start();
     }
 }
 
@@ -66,10 +88,21 @@ function startVoice() {
 }
 
 function stopVoice() {
+    if (!isListening) return; // Important: prevents loops
+
     isListening = false;
-    document.getElementById('voiceBtn').classList.remove('listening');
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) voiceBtn.classList.remove('listening');
+    
+    // Restore placeholder
+    handleLanguageChange(selectedLanguage);
+
     if (recognition) {
-        recognition.stop();
+        try {
+            recognition.stop(); 
+        } catch (e) {
+            // Error is ignored if recognition was already stopped by the browser
+        }
     }
 }
 
@@ -113,8 +146,8 @@ function handleLanguageChange(langCode) {
     const isEnglish = langCode === 'en-US';
     
     // 1. Voice and Upload
-    if (voiceBtn) voiceBtn.style.display = isEnglish ? 'flex' : 'none';
-    if (uploadBtn) uploadBtn.style.display = isEnglish ? 'flex' : 'none';
+    if (voiceBtn) voiceBtn.style.display = 'flex';
+    if (uploadBtn) uploadBtn.style.display = 'flex';
 
     // 2. TTS Reader
     if (ttsToggleWrapper) {
