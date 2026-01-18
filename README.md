@@ -1,1 +1,1 @@
-https://fakenewsdetector-hqaz.onrender.com
+https://fakenewsdetector-u7dw.onrender.com
